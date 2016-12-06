@@ -1,0 +1,57 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "config": {
+      "type": "secureObject"
+    }
+  },
+  "variables": {
+    "tenantId": "[parameters('config').servicePrincipalTenant]",
+    "keyVaultName": "[parameters('config').vaultName]",
+    "defaultLocation": "[resourceGroup().location]",
+    "secretName": "[parameters('config').secret.name]",
+    "secretValue": "[parameters('config').secret.value]",
+    "accessPolicies" : "[parameters('config').accessPolicies]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "name": "[variables('keyVaultName')]",
+      "apiVersion": "2015-06-01",
+      "location": "[variables('defaultLocation')]",
+      "tags": {
+        "displayName": "KeyVault"
+      },
+      "properties": {
+        "enabledForDeployment": true,
+        "enabledForTemplateDeployment": true,
+        "tenantId": "[variables('tenantId')]",
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        },
+        "accessPolicies": "[variables('accessPolicies')]"
+      },
+      "resources": [
+        {
+          "type": "secrets",
+          "name": "[variables('secretName')]",
+          "apiVersion": "2015-06-01",
+          "properties": {
+            "value": "[variables('secretValue')]"
+          },
+          "dependsOn": [
+            "[concat('Microsoft.KeyVault/vaults/', variables('keyVaultName'))]"
+          ]
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "KeyVaultUri": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.KeyVault/vaults/', variables('keyVaultName'))).VaultUri]"
+    }
+  }
+}
