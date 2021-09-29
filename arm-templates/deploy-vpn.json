@@ -35,7 +35,7 @@
       "type": "secureObject"
     },
     "contentVersion": {
-      "defaultValue": "ericmai/testing",
+      "defaultValue": "ericmai/testing2",
       "type": "string",
       "metadata": {
         "description": "The version of the templates to use. This refers to a git branch. This parameter is ignored if contentRootOverride is provided"
