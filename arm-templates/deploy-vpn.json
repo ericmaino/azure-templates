@@ -57,7 +57,7 @@
     }
   },
   "variables": {
-    "utilityContentVersion": "ericmai/testing3",
+    "utilityContentVersion": "ericmai/testing4",
     "utilityContentRoot": "[concat('https://raw.githubusercontent.com/MeetEric/arm-template-utilities/', variables('utilityContentVersion'))]",
     "resourceLocations": [
       "[resourceGroup().location]",
