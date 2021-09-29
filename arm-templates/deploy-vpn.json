@@ -120,7 +120,7 @@
             "value": "[variables('utilityContentRoot')]"
           },
           "extensionsRoot": {
-            "value": "[concat(variables('contentRoot'), '/extensions')]"
+            "value": "[concat(variables('contentRoot'), '/arm-templates/extensions')]"
           },
           "extensions": {
             "value": "[variables('extensions')]"
