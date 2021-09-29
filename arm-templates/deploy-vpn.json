@@ -57,7 +57,7 @@
     }
   },
   "variables": {
-    "utilityContentVersion": "ericmai/testing",
+    "utilityContentVersion": "ericmai/testing3",
     "utilityContentRoot": "[concat('https://raw.githubusercontent.com/MeetEric/arm-template-utilities/', variables('utilityContentVersion'))]",
     "resourceLocations": [
       "[resourceGroup().location]",
@@ -188,7 +188,7 @@
             "value": "[parameters('vmSku')]"
           },
           "image": {
-            "value": "Ubuntu16.04.0-LTS"
+            "value": "Ubuntu20.04-LTS"
           },
           "instanceCount": {
             "value": 1
