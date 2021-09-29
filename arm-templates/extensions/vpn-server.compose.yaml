@@ -1,0 +1,6 @@
+version: '3'
+services:
+  vpn-server:
+    image: ubuntu
+    hostname: ${HOST_NAME}-vpn
+    restart: never

@@ -1,0 +1,98 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "commands": {
+            "type": "array",
+            "defaultValue": []
+        },
+        "nsgRules": {
+            "type": "array",
+            "defaultValue": []
+        },
+        "exports": {
+            "type": "array",
+            "defaultValue": []
+        },
+        "ruleSeed": {
+            "type": "int",
+            "defaultValue": 100
+        },
+        "data": {
+            "type": "object",
+            "defaultValue": {
+                "dockerImage": "ethereumex/eth-stats-dashboard:latest"
+            }
+        },
+        "contentRoot": {
+            "type": "string"
+        },
+        "internalExports": {
+            "type": "array",
+            "defaultValue": []
+        }
+    },
+    "variables": {
+        "internalExports": [],
+        "nsgRules": [
+            {
+                "name": "allow-vpn-traffic",
+                "properties": {
+                    "protocol": "Udp",
+                    "sourcePortRange": "*",
+                    "destinationPortRange": "1194",
+                    "sourceAddressPrefix": "Internet",
+                    "destinationAddressPrefix": "*",
+                    "access": "Allow",
+                    "priority": "[add(parameters('ruleSeed'), 1)]",
+                    "direction": "Inbound"
+                }
+            }
+        ],
+        "exports": [
+            {
+                "Name": "VPN",
+                "Source": 1194,
+                "Destination": 1194,
+                "Protocol": "TCP"
+            }
+        ],
+        "localDocker": "/root/docker-compose.yaml",
+        "dockerFile": "[concat(parameters('contentRoot'), '/vpn-server.compose.yaml')]",
+        "curl": "curl -S -s --connect-timeout 5 --retry 15",
+        "commands": [
+            
+            {
+                "name": "DownloadCompose",
+                "command": "[concat(variables('curl'), ' -o ', variables('localDocker'), ' ', variables('dockerFile'))]"
+            },
+            {
+                "name": "Remove prior configuration",
+                "command": "[concat('docker-compose -f ', variables('localDocker'), ' down -v')]",
+                "environment": {
+                    "DOCKER_IMAGE": "[parameters('data').dockerImage]"
+                }
+            },
+            {
+                "name": "ComposeDashboard",
+                "command": "[concat('docker-compose -f ', variables('localDocker'), ' up -d')]",
+                "environment": {
+                    "DOCKER_IMAGE": "[parameters('data').dockerImage]"
+                }
+            }
+        ]
+    },
+    "resources": [],
+    "outputs": {
+        "Result": {
+            "type": "object",
+            "value": {
+                "Commands": "[concat(parameters('commands'), variables('commands'))]",
+                "NsgRules": "[concat(parameters('nsgRules'), variables('nsgRules'))]",
+                "Exports": "[concat(parameters('exports'), variables('exports'))]",
+                "InternalExports": "[concat(parameters('internalExports'), variables('internalExports'))]",
+                "RuleSeed": "[add(parameters('ruleSeed'), length(variables('nsgRules')))]"
+            }
+        }
+    }
+}
