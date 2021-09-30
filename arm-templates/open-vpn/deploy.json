@@ -25,7 +25,7 @@
       "templateRoot" : "arm-templates/open-vpn",
       "publicKey" : "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDU4licsxcp8gA84Qgf+5UcQnOe9diLFoZ6wF9vzBaGf3ljAMGNv0BezirAmQvSHMjjGR3MTkHSMCaMhA21pToMrk0aYftRwwinkDV8I6Jtc2cSU42/JjnQlh71NoYjpbZemKNsNdnIMjS/T2Ybl8dXdgl6P0q4T84ojavolSBsU/Z1HsJBRaVsnOf83rWePZDhRWJyN5ERG+ubcfelQT+2NfmygB+wX3xTwegD9ui1GZGKwCS6ysbnZ1M11RS7DWqWZChs58cmy5FFQJt1/ARIzrSPRZ1yG7qyV4pilAJo4WmwMC4iMnW4ZTp+69DDBHh72yB6CGL1llfxADJXvV/d"
     },
-    "contentVersion": "ericmai/vpn",
+    "contentVersion": "ericmai/vpn2",
     "utilityContentVersion": "Release-v3.0.0",
     "utilityContentRoot": "[concat('https://raw.githubusercontent.com/MeetEric/arm-template-utilities/', variables('utilityContentVersion'))]",
     "resourceLocations": [
@@ -89,7 +89,7 @@
             "value": "[variables('utilityContentRoot')]"
           },
           "extensionsRoot": {
-            "value": "[concat(variables('contentRoot'), variables('config').templateRoot)]"
+            "value": "[concat(variables('contentRoot'), '/', variables('config').templateRoot)]"
           },
           "extensions": {
             "value": "[variables('extensions')]"

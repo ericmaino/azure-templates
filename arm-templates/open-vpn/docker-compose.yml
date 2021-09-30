@@ -1,7 +1,7 @@
 version: '3'
 services:
   vpn-server:
-    image: ericmai.azurecr.io/vpn
+    image: ericmaino/development:vpn
     ports:
       - 1194:1194/udp
     cap_add:
