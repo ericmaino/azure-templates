@@ -21,7 +21,7 @@
         "data": {
             "type": "object",
             "defaultValue": {
-                "dockerImage": "ethereumex/eth-stats-dashboard:latest"
+                "dockerComposePath": "docker-compose.yaml"
             }
         },
         "parentName": {
@@ -39,11 +39,11 @@
         "internalExports": [],
         "nsgRules": [
             {
-                "name": "allow-vpn-traffic",
+                "name": "allow-http",
                 "properties": {
-                    "protocol": "Udp",
+                    "protocol": "Tcp",
                     "sourcePortRange": "*",
-                    "destinationPortRange": "1194",
+                    "destinationPortRange": "80",
                     "sourceAddressPrefix": "Internet",
                     "destinationAddressPrefix": "*",
                     "access": "Allow",
@@ -54,34 +54,28 @@
         ],
         "exports": [
             {
-                "Name": "VPN",
-                "Source": 1194,
-                "Destination": 1194,
+                "Name": "HTTP",
+                "Source": 80,
+                "Destination": 80,
                 "Protocol": "TCP"
             }
         ],
         "localDocker": "/root/docker-compose.yaml",
-        "dockerFile": "[concat(parameters('contentRoot'), '/vpn-server.compose.yaml')]",
+        "dockerFile": "[concat(parameters('contentRoot'), '/', parameters('data').dockerComposePath)]",
         "curl": "curl -S -s --connect-timeout 5 --retry 15",
         "commands": [
-            
+
             {
-                "name": "DownloadCompose",
+                "name": "Download docker-compose.yaml",
                 "command": "[concat(variables('curl'), ' -o ', variables('localDocker'), ' ', variables('dockerFile'))]"
             },
             {
                 "name": "Remove prior configuration",
-                "command": "[concat('docker-compose -f ', variables('localDocker'), ' down -v')]",
-                "environment": {
-                    "DOCKER_IMAGE": "[parameters('data').dockerImage]"
-                }
+                "command": "[concat('docker-compose -f ', variables('localDocker'), ' down -v')]"
             },
             {
                 "name": "ComposeDashboard",
-                "command": "[concat('docker-compose -f ', variables('localDocker'), ' up -d')]",
-                "environment": {
-                    "DOCKER_IMAGE": "[parameters('data').dockerImage]"
-                }
+                "command": "[concat('docker-compose -f ', variables('localDocker'), ' up -d')]"
             }
         ]
     },

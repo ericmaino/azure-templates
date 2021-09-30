@@ -1,0 +1,15 @@
+version: "3"
+services:
+  request-bin:
+    image: ericmaino/requestbin
+    hostname: ${HOST_NAME}-app
+    restart: always
+    depends_on:
+      - redis
+    environment:
+      REALM: prod
+      REDIS_URL: "//redis:6379"
+    ports:
+      - "80:8000"
+  redis:
+    image: redis
