@@ -1,0 +1,195 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "contentRootOverride": {
+      "defaultValue": "",
+      "type": "string",
+      "metadata": {
+        "description": "Url location of root templates"
+      }
+    },
+    "locationOverride": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Location to deploy resources. By default the template will use the Resource Group location"
+      }
+    }
+  },
+  "variables": {
+    "config" : {
+      "rootName" : "ericmai-vpn",
+      "username" : "azureuser",
+      "vmSku" : "Standard_B1s",
+      "templateRoot" : "arm-templates/open-vpn",
+      "publicKey" : "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDU4licsxcp8gA84Qgf+5UcQnOe9diLFoZ6wF9vzBaGf3ljAMGNv0BezirAmQvSHMjjGR3MTkHSMCaMhA21pToMrk0aYftRwwinkDV8I6Jtc2cSU42/JjnQlh71NoYjpbZemKNsNdnIMjS/T2Ybl8dXdgl6P0q4T84ojavolSBsU/Z1HsJBRaVsnOf83rWePZDhRWJyN5ERG+ubcfelQT+2NfmygB+wX3xTwegD9ui1GZGKwCS6ysbnZ1M11RS7DWqWZChs58cmy5FFQJt1/ARIzrSPRZ1yG7qyV4pilAJo4WmwMC4iMnW4ZTp+69DDBHh72yB6CGL1llfxADJXvV/d"
+    },
+    "contentVersion": "ericmai/vpn",
+    "utilityContentVersion": "Release-v3.0.0",
+    "utilityContentRoot": "[concat('https://raw.githubusercontent.com/MeetEric/arm-template-utilities/', variables('utilityContentVersion'))]",
+    "resourceLocations": [
+      "[resourceGroup().location]",
+      "[parameters('locationOverride')]"
+    ],
+    "contentRootUrl": "[concat('https://raw.githubusercontent.com/ericmaino/azure-templates/', variables('contentVersion'))]",
+    "contentRoots": [
+      "[variables('contentRootUrl')]",
+      "[parameters('contentRootOverride')]"
+    ],
+    "contentRoot": "[variables('contentRoots')[length(take(parameters('contentRootOverride'),1))]]",
+    "resourceLocation": "[tolower(variables('resourceLocations')[length(take(parameters('locationOverride'),1))])]",
+    "rootName": "[toLower(variables('config').rootName)]",
+    "namingInfix": "[variables('rootName')]",
+    "dNetworkName": "[concat(variables('rootName'), '.Network')]",
+    "dVMSS": "[concat(variables('rootName'), '.VMSSCommands')]",
+    "initCommands": [],
+    "extensionName": "[concat(variables('rootName'), '.Extensions')]",
+    "extensions": [
+      {
+        "name": "OpenVPN",
+        "extension": "open-vpn.extension.json",
+        "data": {
+          "dockerComposePath": "docker-compose.yml"
+        }
+      }
+    ],
+    "defaultSecurityRules": [
+      {
+        "name": "allow-ssh",
+        "properties": {
+          "protocol": "Tcp",
+          "sourcePortRange": "*",
+          "destinationPortRange": "22",
+          "sourceAddressPrefix": "Internet",
+          "destinationAddressPrefix": "*",
+          "access": "Allow",
+          "priority": 100,
+          "direction": "Inbound"
+        }
+      }
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "[variables('extensionName')]",
+      "apiVersion": "2021-04-01",
+      "properties": {
+        "templateLink": {
+          "contentVersion": "1.0.0.0",
+          "uri": "[concat(variables('utilityContentRoot'), '/template.extensions.json')]"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "rootName": {
+            "value": "[variables('extensionName')]"
+          },
+          "contentRoot": {
+            "value": "[variables('utilityContentRoot')]"
+          },
+          "extensionsRoot": {
+            "value": "[concat(variables('contentRoot'), variables('config').templateRoot)]"
+          },
+          "extensions": {
+            "value": "[variables('extensions')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "[variables('dNetworkName')]",
+      "apiVersion": "2021-04-01",
+      "properties": {
+        "templateLink": {
+          "contentVersion": "1.0.0.0",
+          "uri": "[concat(variables('utilityContentRoot'), '/template.network.loadBalanced.switch.json')]"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[variables('resourceLocation')]"
+          },
+          "namingInfix": {
+            "value": "[variables('namingInfix')]"
+          },
+          "subnets": {
+            "value": [
+              {
+                "name": "default",
+                "prefix": "10.0.0.0/24",
+                "rules": "[concat(variables('defaultSecurityRules'), reference(variables('extensionName')).outputs.result.value.nsgRules)]"
+              }
+            ]
+          },
+          "exportRules": {
+            "value": "[reference(variables('extensionName')).outputs.result.value.exports]"
+          },
+          "contentRoot": {
+            "value": "[variables('utilityContentRoot')]"
+          }
+        }
+      },
+      "dependsOn": [ "[variables('extensionName')]" ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "[variables('dVMSS')]",
+      "apiVersion": "2021-04-01",
+      "properties": {
+        "templateLink": {
+          "contentVersion": "1.0.0.0",
+          "uri": "[concat(variables('utilityContentRoot'), '/template.vmss.commands.json')]"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[variables('resourceLocation')]"
+          },
+          "contentRoot": {
+            "value": "[variables('utilityContentRoot')]"
+          },
+          "vmssName": {
+            "value": "[concat(variables('namingInfix'), '-n')]"
+          },
+          "vmSku": {
+            "value": "[variables('config').vmSku]"
+          },
+          "image": {
+            "value": "Ubuntu20.04-LTS"
+          },
+          "instanceCount": {
+            "value": 1
+          },
+          "username": {
+            "value": "[variables('config').username]"
+          },
+          "sshPublicKey": {
+            "value": "[variables('config').publicKey]"
+          },
+          "commandsJson": {
+            "value": {
+              "Commands": "[concat(variables('initCommands'), reference(variables('extensionName')).outputs.result.value.commands)]"
+            }
+          },
+          "networkConfiguration": {
+            "value": {
+              "subnet": {
+                "id": "[reference(variables('dNetworkName')).outputs.network.value.subnets[0].id]"
+              },
+              "loadBalancerBackendAddressPools": "[reference(variables('dNetworkName')).outputs.network.value.backendPools]"
+            }
+          }
+        }
+      },
+      "dependsOn": [ "[variables('dNetworkName')]" ]
+    }
+  ],
+  "outputs": {
+    "ip": {
+      "type": "string",
+      "value": "[reference(variables('dNetworkName')).outputs.network.value.ip]"
+    }
+  }
+}

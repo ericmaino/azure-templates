@@ -1,0 +1,8 @@
+version: '3'
+services:
+  vpn-server:
+    image: ericmai.azurecr.io/vpn
+    ports:
+      - 1194:1194/udp
+    cap_add:
+      - NET_ADMIN
